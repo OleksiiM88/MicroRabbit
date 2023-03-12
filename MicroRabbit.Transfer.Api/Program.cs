@@ -1,6 +1,10 @@
+using MicroRabbit.Domain.Core.Bus;
 using MicroRabbit.Infra.IoC;
 using MicroRabbit.Transfer.Data.Context;
+using MicroRabbit.Transfer.Domain.EventHandlers;
+using MicroRabbit.Transfer.Domain.Events;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,10 +40,15 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+ConfigureEventBus(app);
 app.Run();
 
-
+void ConfigureEventBus(WebApplication app)
+{
+	var eventBus = app.Services.GetRequiredService<IEventBus>();
+	eventBus.Subscribe<TransferCreatedEvent, TransferEventHandler>();
+}
 void RegisterService(IServiceCollection services)
 {
-	DependencyContainer.RegisterService(services);
+	DependencyContainer.RegisterTranferService(services);
 }

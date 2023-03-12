@@ -12,6 +12,8 @@ using MicroRabbit.Transfer.Application.Interfaces;
 using MicroRabbit.Transfer.Application.Services;
 using MicroRabbit.Transfer.Data.Context;
 using MicroRabbit.Transfer.Data.Repository;
+using MicroRabbit.Transfer.Domain.EventHandlers;
+using MicroRabbit.Transfer.Domain.Events;
 using MicroRabbit.Transfer.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,7 +21,7 @@ namespace MicroRabbit.Infra.IoC
 {
 	public class DependencyContainer
 	{
-		public static void RegisterService(IServiceCollection services)
+		public static void RegisterBankingService(IServiceCollection services)
 		{
 			//DomainBus
 			services.AddTransient<IEventBus, RabbitMQBus>();
@@ -29,12 +31,26 @@ namespace MicroRabbit.Infra.IoC
 
 			//Application Services
 			services.AddTransient<IAccountService, AccountService>();
-			services.AddTransient<ITransferService, TransferService>();
 
 			//Data
 			services.AddTransient<IAccountRepository, AccountRepository>();
-			services.AddTransient<ITransferRepository, TransferRepository>();
 			services.AddTransient<BankingDbContext>();
+		}
+
+		public static void RegisterTranferService(IServiceCollection services)
+		{
+			//DomainBus
+			services.AddTransient<IEventBus, RabbitMQBus>();
+
+			//Domain Events
+			services.AddTransient<IEventHandler<TransferCreatedEvent>, TransferEventHandler>();
+
+
+			//Application Services
+			services.AddTransient<ITransferService, TransferService>();
+
+			//Data
+			services.AddTransient<ITransferRepository, TransferRepository>();
 			services.AddTransient<TransferDbContext>();
 		}
 	}

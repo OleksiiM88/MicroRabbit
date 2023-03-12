@@ -47,5 +47,5 @@ app.Run();
 
 void RegisterService(IServiceCollection services)
 {
-	DependencyContainer.RegisterService(services);
+	DependencyContainer.RegisterBankingService(services);
 }
