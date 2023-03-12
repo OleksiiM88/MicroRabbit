@@ -2,6 +2,7 @@
 using MicroRabbit.Domain.Core.Bus;
 using MicroRabbit.Domain.Core.Commands;
 using MicroRabbit.Domain.Core.Events;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -14,12 +15,15 @@ namespace MicroRabbit.Infra.Bus
 		private readonly IMediator _mediator;
 		private readonly Dictionary<string, List<Type>> _handlers;
 		private readonly List<Type> _eventTypes;
+		private readonly IServiceScopeFactory _serviceScopeFactory;
 
-		public RabbitMQBus(IMediator mediator)
+		public RabbitMQBus(IMediator mediator, IServiceScopeFactory serviceScopeFactory)
         {
 			_mediator = mediator;
+			_serviceScopeFactory = serviceScopeFactory;
 			_handlers = new Dictionary<string, List<Type>>();
 			_eventTypes = new List<Type>();
+			
         }
         
 		public Task SendCommand<T>(T command) where T : Command
@@ -105,10 +109,11 @@ namespace MicroRabbit.Infra.Bus
 		{
 			if (_handlers.ContainsKey(eventName))
 			{
+				using var scope = _serviceScopeFactory.CreateScope();
 				var subcriptions = _handlers[eventName];
 				foreach (var subcription in subcriptions)
 				{
-					var handler = Activator.CreateInstance(subcription);
+					var handler = scope.ServiceProvider.GetService(subcription);
 					if (handler == null) continue;
 					var eventType = _eventTypes.SingleOrDefault(t => t.Name == eventName);
 					var @event = JsonConvert.DeserializeObject(message, eventType);
